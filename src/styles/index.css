@@ -1,0 +1,14 @@
+@import "./tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "./global.css";
+
+/* Small helpers aligned with design system */
+.card { @apply bg-white border border-[rgba(17,17,17,0.06)] rounded-base p-4; }
+.btn { @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-base font-semibold transition duration-150; }
+.btn-primary { @apply text-white bg-[color:var(--color-accent)] hover:brightness-95; }
+.btn-secondary { @apply bg-transparent text-[color:var(--color-accent)] border border-[rgba(139,0,0,0.12)]; }
+

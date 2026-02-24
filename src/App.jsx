@@ -1,43 +1,29 @@
 import React from "react";
-import TopBar from "./components/TopBar";
-import SecondaryPanel from "./components/SecondaryPanel";
-import ProofFooter from "./components/ProofFooter";
-import Button from "./components/Button";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Landing from "./pages/Landing";
+import DashboardLayout from "./pages/DashboardLayout";
+import DashboardHome from "./pages/DashboardHome";
+import Practice from "./pages/Practice";
+import Assessments from "./pages/Assessments";
+import Resources from "./pages/Resources";
+import Profile from "./pages/Profile";
+import NotFound from "./pages/NotFound";
 
 export default function App() {
   return (
-    <div className="page">
-      <TopBar projectName="KodNest Premium Build System" step="1 / 4" status="Not Started" />
-
-      <div className="container">
-        <section style={{ marginTop: 24 }}>
-          <h1 className="context-headline">Create a dependable build</h1>
-          <p className="context-subtext">A calm, focused environment for building production-ready artifacts.</p>
-        </section>
-
-        <main className="main">
-          <div className="primary">
-            <div className="card" style={{ marginBottom: 16 }}>
-              <h3 style={{ marginTop: 0 }}>Primary Workspace</h3>
-              <p style={{ maxWidth: 720 }}>This is the primary workspace: clean cards, predictable components, and no crowding.</p>
-
-              <div style={{ marginTop: 16, display: "flex", gap: 12 }}>
-                <Button>Build</Button>
-                <Button variant="secondary">Preview</Button>
-              </div>
-            </div>
-
-            <div className="card">
-              <h4 style={{ marginTop: 0 }}>Details</h4>
-              <p style={{ maxWidth: 720 }}>Use this area to configure build inputs. The design system enforces spacing and type scale.</p>
-            </div>
-          </div>
-
-          <SecondaryPanel stepExplanation="Step explanation and instructions." prompt="Generate production-ready build with these settings." />
-        </main>
-      </div>
-
-      <ProofFooter />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route index element={<DashboardHome />} />
+          <Route path="practice" element={<Practice />} />
+          <Route path="assessments" element={<Assessments />} />
+          <Route path="resources" element={<Resources />} />
+          <Route path="profile" element={<Profile />} />
+        </Route>
+        <Route path="/404" element={<NotFound />} />
+        <Route path="*" element={<Navigate to="/404" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
