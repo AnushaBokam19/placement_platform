@@ -12,7 +12,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.14.1",
-    "lucide-react": "^0.276.0"
+    "lucide-react": "^0.276.0",
+    "recharts": "^2.6.0"
   },
   "devDependencies": {
     "vite": "^5.0.0",
