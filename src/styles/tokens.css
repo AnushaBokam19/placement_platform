@@ -1,0 +1,25 @@
+:root {
+  /* Colors */
+  --color-bg: #F7F6F3;
+  --color-text: #111111;
+  --color-accent: #8B0000;
+  --color-success: #4B8F6F;
+  --color-warning: #C47A00;
+
+  /* Spacing scale */
+  --space-8: 8px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-40: 40px;
+  --space-64: 64px;
+
+  /* Border / radius */
+  --radius: 8px;
+  --border-subtle: 1px solid rgba(17, 17, 17, 0.06);
+
+  /* Typography */
+  --font-heading: "Merriweather", Georgia, serif;
+  --font-body: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  --text-size-body: 16px;
+  --line-height-body: 1.7;
+}
