@@ -7,7 +7,7 @@ function NavItem({ to, icon: Icon, children }) {
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex items-center gap-3 px-3 py-2 rounded ${isActive ? "bg-[color:var(--color-bg)] font-semibold" : "text-[rgba(17,17,17,0.8)]"}`
+        `block w-full flex items-center gap-3 rounded-md ${isActive ? "bg-[rgba(139,0,0,0.04)] font-semibold" : "text-[rgba(17,17,17,0.8)] hover:bg-[rgba(17,17,17,0.02)]"} px-3 py-2`
       }
     >
       <Icon size={18} />
@@ -18,10 +18,10 @@ function NavItem({ to, icon: Icon, children }) {
 
 export default function DashboardLayout() {
   return (
-    <div className="min-h-screen flex">
-      <aside className="w-64 border-r border-[rgba(17,17,17,0.06)] bg-white p-4">
-        <div className="mb-6 font-semibold">Placement Prep</div>
-        <nav className="flex flex-col gap-1">
+    <div className="min-h-screen flex bg-[var(--color-bg)]">
+      <aside style={{width:"20%"}} className="w-64 border-r border-[rgba(17,17,17,0.06)] bg-white p-6">
+        <div className="mb-6 font-semibold text-lg">Placement Prep</div>
+        <nav className="flex flex-col gap-2 mt-4">
           <NavItem to="/dashboard" icon={Home}>Dashboard</NavItem>
           <NavItem to="/dashboard/practice" icon={Code}>Practice</NavItem>
           <NavItem to="/dashboard/assessments" icon={Video}>Assessments</NavItem>
@@ -31,15 +31,19 @@ export default function DashboardLayout() {
       </aside>
 
       <div className="flex-1 flex flex-col">
-        <header className="flex items-center justify-between px-6 py-4 border-b border-[rgba(17,17,17,0.06)] bg-[var(--color-bg)]">
-          <div className="text-lg font-semibold">Placement Prep</div>
-          <div className="flex items-center gap-4">
-            <div className="w-9 h-9 rounded-full bg-white border border-[rgba(17,17,17,0.06)] flex items-center justify-center">A</div>
+        <header className="border-b border-[rgba(17,17,17,0.06)] bg-[var(--color-bg)]">
+          <div className="container flex items-center justify-between" style={{ paddingLeft: "2%", paddingRight: "4%" }}>
+            <div className="py-4 text-lg font-semibold">Placement Prep</div>
+            <div className="flex items-center gap-4 py-4">
+              <div className="w-9 h-9 rounded-full bg-white border border-[rgba(17,17,17,0.06)] flex items-center justify-center">A</div>
+            </div>
           </div>
         </header>
 
         <main className="p-6">
-          <Outlet />
+          <div className="container">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

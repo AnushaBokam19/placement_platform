@@ -65,10 +65,10 @@ export default function DashboardHome() {
   const filledDays = [true, true, true, false, true, true, false]; // Mon-Sun
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="two-col">
       {/* Left column */}
-      <div className="space-y-6">
-        <div className="card">
+      <div className="stack">
+        <div style={{height:"300px"}} className="card">
           <h3 className="text-lg font-semibold mb-4">Overall Readiness</h3>
           <div className="flex items-center justify-center">
             <CircularReadiness value={72} />
@@ -97,7 +97,7 @@ export default function DashboardHome() {
       </div>
 
       {/* Right column */}
-      <div className="space-y-6">
+      <div className="stack">
         <div className="card">
           <h3 className="text-lg font-semibold mb-3">Continue Practice</h3>
           <div className="flex items-center justify-between">
