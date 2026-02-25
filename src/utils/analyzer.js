@@ -327,6 +327,106 @@ function mapRounds(found, companyIntel) {
   return rounds;
 }
 
+// Normalize extracted skills into consistent schema keys
+function normalizeExtracted(found) {
+  const normalized = {
+    coreCS: found["Core CS"] || [],
+    languages: found["Languages"] || [],
+    web: found["Web"] || [],
+    data: found["Data"] || [],
+    cloud: found["Cloud/DevOps"] || [],
+    testing: found["Testing"] || [],
+    other: [],
+  };
+  // If nothing found, populate defaults
+  const any = Object.values(normalized).some((arr) => arr.length > 0);
+  if (!any) {
+    normalized.other = ["Communication", "Problem solving", "Basic coding", "Projects"];
+  } else {
+    // if there was a "General" detected, add to other
+    if (found["General"]) normalized.other = normalized.other.concat(found["General"]);
+  }
+  return normalized;
+}
+
+// Ensure a full schema for a history entry
+function buildAnalysisEntry({
+  id,
+  createdAt,
+  company = "",
+  role = "",
+  jdText = "",
+  extractedFound = {},
+  plan = [],
+  checklist = {},
+  questions = [],
+  baseScore = 0,
+  skillConfidenceMap = {},
+  roundMapping = [],
+}) {
+  const extractedSkills = normalizeExtracted(extractedFound);
+
+  // Round mapping normalized: convert to { roundTitle, focusAreas[], whyItMatters }
+  const roundMappingNorm = (roundMapping || []).map((r) => {
+    return {
+      roundTitle: r.title || r.roundTitle || "",
+      focusAreas: r.focusAreas || [],
+      whyItMatters: r.why || r.whyItMatters || "",
+    };
+  });
+
+  // Checklist normalized: [{ roundTitle, items[] }]
+  const checklistNorm = Object.keys(checklist || {}).map((k) => ({
+    roundTitle: k,
+    items: checklist[k] || [],
+  }));
+
+  // Plan 7 days normalized: ensure day, focus, tasks[]
+  const plan7Days = (plan || []).slice(0, 7).map((p, idx) => ({
+    day: p.day || idx + 1,
+    focus: p.title || p.focus || `Day ${p.day || idx + 1}`,
+    tasks: p.tasks || [],
+  }));
+
+  // questions: ensure array of strings
+  const questionsNorm = (questions || []).map((q) => String(q));
+
+  // Ensure skillConfidenceMap covers all skills
+  const allSkills = [].concat(
+    extractedSkills.coreCS,
+    extractedSkills.languages,
+    extractedSkills.web,
+    extractedSkills.data,
+    extractedSkills.cloud,
+    extractedSkills.testing,
+    extractedSkills.other
+  );
+  const scm = { ...(skillConfidenceMap || {}) };
+  allSkills.forEach((s) => {
+    if (!scm[s]) scm[s] = "practice";
+  });
+
+  const finalScore = baseScore + Object.values(scm).reduce((acc, v) => acc + (v === "know" ? 2 : -2), 0);
+  const finalScoreClamped = Math.max(0, Math.min(100, finalScore));
+
+  return {
+    id,
+    createdAt,
+    company: company || "",
+    role: role || "",
+    jdText: jdText || "",
+    extractedSkills,
+    roundMapping: roundMappingNorm,
+    checklist: checklistNorm,
+    plan7Days,
+    questions: questionsNorm,
+    baseScore: Number(baseScore) || 0,
+    skillConfidenceMap: scm,
+    finalScore: finalScoreClamped,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 export {
   extractSkills,
   flattenCategories,
@@ -339,6 +439,8 @@ export {
   mapRounds,
   inferCompanySize,
   inferIndustry,
+  normalizeExtracted,
+  buildAnalysisEntry,
 };
 
 

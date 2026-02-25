@@ -10,6 +10,8 @@ import Assessments from "./pages/Assessments";
 import Resources from "./pages/Resources";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import PrpTest from "./pages/PrpTest";
+import PrpShip from "./pages/PrpShip";
 
 export default function App() {
   return (
@@ -26,6 +28,8 @@ export default function App() {
           <Route path="results/:id?" element={<Results />} />
         </Route>
         <Route path="/404" element={<NotFound />} />
+        <Route path="/prp/07-test" element={<PrpTest />} />
+        <Route path="/prp/08-ship" element={<PrpShip />} />
         <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
     </BrowserRouter>

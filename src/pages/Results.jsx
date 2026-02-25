@@ -2,11 +2,23 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 function loadHistory() {
+  const out = [];
   try {
     const raw = localStorage.getItem("analysis_history");
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return out;
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return out;
+    arr.forEach((item) => {
+      try {
+        if (!item || !item.id || !item.createdAt) throw new Error("invalid");
+        out.push(item);
+      } catch {
+        // skip corrupted entry
+      }
+    });
+    return out;
   } catch {
-    return [];
+    return out;
   }
 }
 
@@ -40,7 +52,7 @@ export default function Results() {
       });
       setSkillConfidenceMap(map);
     }
-    setAdjustedScore(entry.readinessScore);
+    setAdjustedScore(entry.finalScore ?? entry.readinessScore ?? entry.baseScore ?? 0);
   }, [entry]);
 
   // compute adjusted score whenever skillConfidenceMap changes
@@ -53,7 +65,8 @@ export default function Results() {
       if (skillConfidenceMap[s] === "know") plus += 2;
       else if (skillConfidenceMap[s] === "practice") minus += 2;
     });
-    let newScore = entry.readinessScore + plus - minus;
+    const base = entry.baseScore ?? entry.readinessScore ?? 0;
+    let newScore = base + plus - minus;
     newScore = Math.max(0, Math.min(100, newScore));
     setAdjustedScore(newScore);
 
@@ -64,7 +77,8 @@ export default function Results() {
       const idx = arr.findIndex((a) => a.id === entry.id);
       if (idx !== -1) {
         arr[idx].skillConfidenceMap = skillConfidenceMap;
-        arr[idx].readinessScore = newScore;
+        arr[idx].finalScore = newScore;
+        arr[idx].updatedAt = new Date().toISOString();
         localStorage.setItem("analysis_history", JSON.stringify(arr));
         // also update local entry state so UI reflects saved score
         setEntry(arr[idx]);
@@ -73,9 +87,20 @@ export default function Results() {
       // ignore
     }
   }, [skillConfidenceMap]);
-  const { company, role, createdAt, extractedSkills, plan, checklist, questions, readinessScore } = entry || {};
+  const { company, role, createdAt, extractedSkills, plan7Days, checklist, questions, baseScore, finalScore } = entry || {};
 
-  const allSkills = useMemo(() => Object.values((extractedSkills || {})).flat(), [extractedSkills]);
+  const allSkills = useMemo(() => {
+    if (!extractedSkills) return [];
+    return [].concat(
+      extractedSkills.coreCS || [],
+      extractedSkills.languages || [],
+      extractedSkills.web || [],
+      extractedSkills.data || [],
+      extractedSkills.cloud || [],
+      extractedSkills.testing || [],
+      extractedSkills.other || []
+    );
+  }, [extractedSkills]);
 
   function toggleSkill(skill) {
     setSkillConfidenceMap((prev) => {
@@ -90,13 +115,13 @@ export default function Results() {
   }
 
   function build7DayText() {
-    if (!plan) return "";
-    return plan.map((p) => `Day ${p.day}: ${p.title}\n- ${p.tasks.join("\n- ")}`).join("\n\n");
+    if (!plan7Days) return "";
+    return plan7Days.map((p) => `Day ${p.day}: ${p.focus}\n- ${p.tasks.join("\n- ")}`).join("\n\n");
   }
 
   function buildChecklistText() {
     if (!checklist) return "";
-    return Object.keys(checklist).map((r) => `${r}\n- ${checklist[r].join("\n- ")}`).join("\n\n");
+    return checklist.map((c) => `${c.roundTitle}\n- ${c.items.join("\n- ")}`).join("\n\n");
   }
 
   function buildQuestionsText() {
@@ -145,7 +170,7 @@ export default function Results() {
         </div>
         <div>
           <div className="text-sm text-[rgba(17,17,17,0.6)]">Readiness Score</div>
-          <div className="text-3xl font-semibold">{adjustedScore ?? readinessScore}</div>
+          <div className="text-3xl font-semibold">{adjustedScore ?? finalScore ?? baseScore ?? 0}</div>
         </div>
       </div>
 
@@ -177,8 +202,8 @@ export default function Results() {
                       <div className="w-8 h-8 rounded-full bg-[var(--color-bg)] border flex items-center justify-center text-sm font-semibold">{i + 1}</div>
                     </div>
                     <div>
-                      <div className="font-medium">{r.title}</div>
-                      <div className="text-sm text-[rgba(17,17,17,0.7)] mt-1">{r.why}</div>
+                      <div className="font-medium">{r.roundTitle || r.title}</div>
+                      <div className="text-sm text-[rgba(17,17,17,0.7)] mt-1">{r.whyItMatters || r.why}</div>
                     </div>
                   </div>
                 ))}
@@ -191,36 +216,49 @@ export default function Results() {
       <div className="card">
         <h3 className="text-lg font-semibold mb-3">Key skills extracted</h3>
         <div className="flex flex-wrap gap-3">
-          {Object.keys(extractedSkills).map((cat) => (
-            <div key={cat} className="mr-4">
-              <div className="text-sm font-medium">{cat}</div>
-              <div className="mt-2 flex gap-2 flex-wrap items-center">
-                {extractedSkills[cat].map((s) => (
-                  <div key={s} className="flex items-center gap-2">
-                    <span className="px-2 py-1 border rounded-full text-sm" style={{ borderColor: "rgba(17,17,17,0.06)" }}>{s}</span>
-                    <button
-                      className={`btn ${skillConfidenceMap[s] === "know" ? "btn-secondary" : "btn-secondary"}`}
-                      onClick={() => toggleSkill(s)}
-                      aria-pressed={skillConfidenceMap[s] === "know"}
-                    >
-                      {skillConfidenceMap[s] === "know" ? "I know this" : "Need practice"}
-                    </button>
+          {extractedSkills &&
+            Object.entries(extractedSkills).map(([cat, list]) => {
+              const labels = {
+                coreCS: "Core CS",
+                languages: "Languages",
+                web: "Web",
+                data: "Data",
+                cloud: "Cloud/DevOps",
+                testing: "Testing",
+                other: "Other",
+              };
+              if (!list || !list.length) return null;
+              return (
+                <div key={cat} className="mr-4">
+                  <div className="text-sm font-medium">{labels[cat] || cat}</div>
+                  <div className="mt-2 flex gap-2 flex-wrap items-center">
+                    {list.map((s) => (
+                      <div key={s} className="flex items-center gap-2">
+                        <span className="px-2 py-1 border rounded-full text-sm" style={{ borderColor: "rgba(17,17,17,0.06)" }}>{s}</span>
+                        <button
+                          className="btn btn-secondary"
+                          onClick={() => toggleSkill(s)}
+                          aria-pressed={skillConfidenceMap[s] === "know"}
+                        >
+                          {skillConfidenceMap[s] === "know" ? "I know this" : "Need practice"}
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-          ))}
+                </div>
+              );
+            })}
         </div>
       </div>
 
       <div className="cols-equal">
         <div className="card">
-          <h3 className="text-lg font-semibold mb-3">Round-wise checklist</h3>
-          {Object.keys(checklist).map((r) => (
-            <div key={r} className="mb-4">
-              <div className="font-medium">{r}</div>
+        <h3 className="text-lg font-semibold mb-3">Round-wise checklist</h3>
+          {(Array.isArray(checklist) ? checklist : []).map((c) => (
+            <div key={c.roundTitle} className="mb-4">
+              <div className="font-medium">{c.roundTitle}</div>
               <ul className="list-disc ml-5 mt-2">
-                {checklist[r].map((it, i) => <li key={i} className="text-sm text-[rgba(17,17,17,0.8)]">{it}</li>)}
+                {(c.items || []).map((it, i) => <li key={i} className="text-sm text-[rgba(17,17,17,0.8)]">{it}</li>)}
               </ul>
             </div>
           ))}
@@ -235,10 +273,10 @@ export default function Results() {
             <button className="btn btn-primary" onClick={downloadTxt}>Download as TXT</button>
           </div>
           <ol className="list-decimal ml-5">
-            {plan.map((p) => (
+            {(Array.isArray(plan7Days) ? plan7Days : []).map((p) => (
               <li key={p.day} className="mb-3">
-                <div className="font-medium">{`Day ${p.day}: ${p.title}`}</div>
-                <div className="text-sm text-[rgba(17,17,17,0.8)]">{p.tasks.join(" · ")}</div>
+                <div className="font-medium">{`Day ${p.day}: ${p.focus}`}</div>
+                <div className="text-sm text-[rgba(17,17,17,0.8)]">{(p.tasks || []).join(" · ")}</div>
               </li>
             ))}
           </ol>
