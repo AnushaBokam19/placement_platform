@@ -149,6 +149,45 @@ export default function Results() {
         </div>
       </div>
 
+      {/* Company Intel */}
+      {entry.companyIntel && entry.companyIntel.name ? (
+        <div className="card">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="text-sm text-[rgba(17,17,17,0.6)]">Company</div>
+              <div className="text-lg font-semibold">{entry.companyIntel.name}</div>
+              <div className="mt-2 text-sm text-[rgba(17,17,17,0.7)]">Industry: {entry.companyIntel.industry}</div>
+              <div className="mt-1 text-sm text-[rgba(17,17,17,0.7)]">Size: {entry.companyIntel.sizeCategory}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-[rgba(17,17,17,0.6)]">Typical Hiring Focus</div>
+              <div className="mt-2 text-sm" style={{ maxWidth: 420 }}>{entry.companyIntel.typicalHiringFocus}</div>
+              <div className="mt-3 text-xs text-[rgba(17,17,17,0.5)]">{entry.companyIntel.note}</div>
+            </div>
+          </div>
+
+          {/* Round Mapping timeline */}
+          {entry.roundMapping && (
+            <div className="mt-6">
+              <div className="text-sm font-medium mb-3">Predicted interview flow</div>
+              <div className="flex flex-col gap-4">
+                {entry.roundMapping.map((r, i) => (
+                  <div key={i} className="flex items-start gap-4">
+                    <div style={{ minWidth: 36 }}>
+                      <div className="w-8 h-8 rounded-full bg-[var(--color-bg)] border flex items-center justify-center text-sm font-semibold">{i + 1}</div>
+                    </div>
+                    <div>
+                      <div className="font-medium">{r.title}</div>
+                      <div className="text-sm text-[rgba(17,17,17,0.7)] mt-1">{r.why}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : null}
+
       <div className="card">
         <h3 className="text-lg font-semibold mb-3">Key skills extracted</h3>
         <div className="flex flex-wrap gap-3">

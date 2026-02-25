@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { extractSkills, flattenCategories, generateChecklist, generatePlan, generateQuestions, scoreReadiness } from "../utils/analyzer";
+import { extractSkills, flattenCategories, generateChecklist, generatePlan, generateQuestions, scoreReadiness, generateCompanyIntel, mapRounds } from "../utils/analyzer";
 
 function saveHistory(entry) {
   const raw = localStorage.getItem("analysis_history");
@@ -41,6 +41,9 @@ export default function Practice() {
       skillConfidenceMap[s] = "practice";
     });
 
+    const companyIntel = generateCompanyIntel(company, jd);
+    const roundMapping = mapRounds(found, companyIntel);
+
     const entry = {
       id: uid(),
       createdAt: new Date().toISOString(),
@@ -48,6 +51,8 @@ export default function Practice() {
       role,
       jdText: jd,
       extractedSkills: flattened,
+      companyIntel,
+      roundMapping,
       skillConfidenceMap,
       plan,
       checklist,

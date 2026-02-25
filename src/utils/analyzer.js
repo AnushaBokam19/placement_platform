@@ -175,6 +175,158 @@ function scoreReadiness({ foundCategories = [], company = "", role = "", jdText 
   return Math.min(100, score);
 }
 
+// --- Company intel heuristics and round mapping ---
+const KNOWN_ENTERPRISES = [
+  "amazon",
+  "google",
+  "microsoft",
+  "facebook",
+  "meta",
+  "apple",
+  "infosys",
+  "tcs",
+  "wipro",
+  "accenture",
+  "ibm",
+  "oracle",
+];
+
+function inferCompanySize(companyName = "") {
+  const name = (companyName || "").toLowerCase();
+  if (!name) return "Startup";
+  for (const k of KNOWN_ENTERPRISES) {
+    if (name.includes(k)) return "Enterprise";
+  }
+  // simple heuristic: names containing 'solutions', 'systems', 'technologies' -> Mid-size
+  if (name.includes("solutions") || name.includes("systems") || name.includes("technologies") || name.includes("labs")) {
+    return "Mid-size";
+  }
+  return "Startup";
+}
+
+function inferIndustry(companyName = "", jdText = "") {
+  const text = ((companyName || "") + " " + (jdText || "")).toLowerCase();
+  if (text.includes("bank") || text.includes("finance") || text.includes("financial")) return "Financial Services";
+  if (text.includes("health") || text.includes("healthcare") || text.includes("medical")) return "Healthcare";
+  if (text.includes("e-commerce") || text.includes("ecommerce") || text.includes("retail")) return "E-commerce / Retail";
+  if (text.includes("education") || text.includes("edtech")) return "Education / EdTech";
+  if (text.includes("telecom") || text.includes("network")) return "Telecommunications";
+  return "Technology Services";
+}
+
+function generateCompanyIntel(companyName = "", jdText = "") {
+  const name = companyName || "";
+  const sizeCategory = inferCompanySize(name);
+  const industry = inferIndustry(name, jdText);
+  const typicalHiringFocus =
+    sizeCategory === "Enterprise"
+      ? "Structured interviews focusing on DSA, system design and process adherence."
+      : "Practical problem solving, product focus, and deep ownership of the stack.";
+
+  return {
+    name,
+    industry,
+    sizeCategory,
+    typicalHiringFocus,
+    note: "Demo Mode: Company intel generated heuristically.",
+  };
+}
+
+function mapRounds(found, companyIntel) {
+  const rounds = [];
+  const hasDSA = (found["Core CS"] || []).map(s => s.toLowerCase()).includes("dsa") || (found["Core CS"] || []).length > 0;
+  const hasWeb = (found["Web"] || []).length > 0;
+  const size = (companyIntel && companyIntel.sizeCategory) || "Startup";
+
+  if (size === "Enterprise") {
+    // Enterprise default flow
+    rounds.push({
+      title: "Round 1: Online Test (DSA + Aptitude)",
+      why: "Standardized screening for algorithmic skills and aptitude.",
+    });
+    rounds.push({
+      title: "Round 2: Technical (DSA + Core CS)",
+      why: "Deeper evaluation of algorithms, data structures and CS fundamentals.",
+    });
+    rounds.push({
+      title: "Round 3: Tech + Projects",
+      why: "Assess system design, project ownership and stack expertise.",
+    });
+    rounds.push({
+      title: "Round 4: HR / Managerial",
+      why: "Culture fit, career goals and logistical questions.",
+    });
+    // tweak for cloud/devops presence
+    if ((found["Cloud/DevOps"] || []).length > 0) {
+      rounds.splice(2, 0, {
+        title: "Infrastructure / DevOps Round",
+        why: "Assess deployment, CI/CD and production operations knowledge.",
+      });
+    }
+  } else if (size === "Mid-size") {
+    rounds.push({
+      title: "Round 1: Practical coding / take-home",
+      why: "Evaluate hands-on problem solving with real-world tasks.",
+    });
+    rounds.push({
+      title: "Round 2: Technical deep-dive",
+      why: "Assess core CS understanding and system components.",
+    });
+    rounds.push({
+      title: "Round 3: System discussion + projects",
+      why: "Evaluate design thinking and project alignment.",
+    });
+    rounds.push({
+      title: "Round 4: HR",
+      why: "Final alignment and fit.",
+    });
+  } else {
+    // Startup
+    if (hasWeb) {
+      rounds.push({
+        title: "Round 1: Practical coding (stack-focused)",
+        why: "Hands-on task to verify practical ability on the company's stack.",
+      });
+      rounds.push({
+        title: "Round 2: System discussion",
+        why: "Discuss architecture choices and trade-offs for product features.",
+      });
+      rounds.push({
+        title: "Round 3: Culture fit / Founder interview",
+        why: "Evaluate ownership mindset and team fit.",
+      });
+    } else if (hasDSA) {
+      rounds.push({
+        title: "Round 1: Coding test",
+        why: "Quick filter on algorithmic problem solving.",
+      });
+      rounds.push({
+        title: "Round 2: Technical interview",
+        why: "Assess core CS and implementation choices.",
+      });
+      rounds.push({
+        title: "Round 3: HR / Fit",
+        why: "Final discussion on role and expectations.",
+      });
+    } else {
+      rounds.push({
+        title: "Round 1: Practical assessment",
+        why: "Task-based evaluation to understand practical skills.",
+      });
+      rounds.push({
+        title: "Round 2: Technical + Projects",
+        why: "Review past work and technical depth.",
+      });
+      rounds.push({
+        title: "Round 3: HR",
+        why: "Confirm fit and logistics.",
+      });
+    }
+  }
+
+  return rounds;
+}
+
 export {
   extractSkills,
   flattenCategories,
@@ -183,5 +335,10 @@ export {
   generateQuestions,
   scoreReadiness,
   CATEGORIES,
+  generateCompanyIntel,
+  mapRounds,
+  inferCompanySize,
+  inferIndustry,
 };
+
 
